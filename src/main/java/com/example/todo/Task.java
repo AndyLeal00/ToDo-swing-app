@@ -1,7 +1,7 @@
 package com.example.todo;
 
 /**
- * Modelo que representa una tarea de la aplicación.
+ * Modelo que representa una tarea de la aplicacion.
  */
 public class Task {
     private String title;

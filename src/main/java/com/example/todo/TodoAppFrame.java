@@ -1,15 +1,17 @@
 package com.example.todo;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
 
 /**
- * Ventana principal de la aplicación To-Do.
+ * Ventana principal de la aplicacion.
+ * Es una interfaz sencilla hecha con Java Swing para gestionar tareas en memoria.
  */
 public class TodoAppFrame extends JFrame {
-    private final JTextField titleField = new JTextField(25);
-    private final JTextArea descriptionArea = new JTextArea(4, 25);
+    private final JTextField titleField = new JTextField(20);
+    private final JTextArea descriptionArea = new JTextArea(4, 20);
     private final JComboBox<TaskStatus> statusComboBox = new JComboBox<>(TaskStatus.values());
     private final JComboBox<String> filterComboBox = new JComboBox<>(new String[]{"Todos", "Pendiente", "En progreso", "Completada"});
 
@@ -18,82 +20,95 @@ public class TodoAppFrame extends JFrame {
     private final TableRowSorter<TaskTableModel> rowSorter = new TableRowSorter<>(tableModel);
 
     public TodoAppFrame() {
-        setTitle("To-Do App - Java Swing");
+        setTitle("Lista de tareas");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(800, 500);
         setLocationRelativeTo(null);
-        setLayout(new BorderLayout(10, 10));
 
         taskTable.setRowSorter(rowSorter);
         taskTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        taskTable.setFillsViewportHeight(true);
 
-        add(createFormPanel(), BorderLayout.NORTH);
-        add(new JScrollPane(taskTable), BorderLayout.CENTER);
-        add(createActionsPanel(), BorderLayout.SOUTH);
+        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
+        mainPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+
+        mainPanel.add(createFormPanel(), BorderLayout.WEST);
+        mainPanel.add(createTablePanel(), BorderLayout.CENTER);
+        mainPanel.add(createButtonsPanel(), BorderLayout.SOUTH);
+
+        add(mainPanel);
     }
 
     private JPanel createFormPanel() {
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBorder(BorderFactory.createTitledBorder("Registro de tareas"));
+        JPanel formPanel = new JPanel(new BorderLayout(5, 5));
+        formPanel.setBorder(BorderFactory.createTitledBorder("Nueva tarea"));
+        formPanel.setPreferredSize(new Dimension(250, 0));
+
+        JPanel fieldsPanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(5, 5, 5, 5);
-        gbc.anchor = GridBagConstraints.WEST;
-
         gbc.gridx = 0;
+        gbc.weightx = 1;
+
         gbc.gridy = 0;
-        panel.add(new JLabel("Titulo:"), gbc);
+        fieldsPanel.add(new JLabel("Titulo:"), gbc);
 
-        gbc.gridx = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        panel.add(titleField, gbc);
-
-        gbc.gridx = 0;
         gbc.gridy = 1;
-        gbc.fill = GridBagConstraints.NONE;
-        panel.add(new JLabel("Descripcion:"), gbc);
+        fieldsPanel.add(titleField, gbc);
 
-        gbc.gridx = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        panel.add(new JScrollPane(descriptionArea), gbc);
-
-        gbc.gridx = 0;
         gbc.gridy = 2;
-        gbc.fill = GridBagConstraints.NONE;
-        panel.add(new JLabel("Estado:"), gbc);
+        fieldsPanel.add(new JLabel("Descripcion:"), gbc);
 
-        gbc.gridx = 1;
+        descriptionArea.setLineWrap(true);
+        descriptionArea.setWrapStyleWord(true);
+        JScrollPane descriptionScroll = new JScrollPane(descriptionArea);
+        gbc.gridy = 3;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.weighty = 1;
+        fieldsPanel.add(descriptionScroll, gbc);
+
+        gbc.gridy = 4;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        panel.add(statusComboBox, gbc);
+        gbc.weighty = 0;
+        fieldsPanel.add(new JLabel("Estado:"), gbc);
+
+        gbc.gridy = 5;
+        fieldsPanel.add(statusComboBox, gbc);
 
         JButton addButton = new JButton("Agregar tarea");
         addButton.addActionListener(event -> addTask());
 
-        gbc.gridx = 1;
-        gbc.gridy = 3;
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.anchor = GridBagConstraints.EAST;
-        panel.add(addButton, gbc);
-
-        return panel;
+        formPanel.add(fieldsPanel, BorderLayout.CENTER);
+        formPanel.add(addButton, BorderLayout.SOUTH);
+        return formPanel;
     }
 
-    private JPanel createActionsPanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+    private JPanel createTablePanel() {
+        JPanel tablePanel = new JPanel(new BorderLayout(5, 5));
+        tablePanel.setBorder(BorderFactory.createTitledBorder("Tareas"));
 
-        JButton changeStatusButton = new JButton("Cambiar estado");
+        JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        filterPanel.add(new JLabel("Filtrar por estado:"));
+        filterComboBox.addActionListener(event -> applyFilter());
+        filterPanel.add(filterComboBox);
+
+        tablePanel.add(filterPanel, BorderLayout.NORTH);
+        tablePanel.add(new JScrollPane(taskTable), BorderLayout.CENTER);
+        return tablePanel;
+    }
+
+    private JPanel createButtonsPanel() {
+        JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+
+        JButton completeButton = new JButton("Terminar Tarea");
+        completeButton.addActionListener(event -> markSelectedTaskAsCompleted());
+
         JButton deleteButton = new JButton("Eliminar tarea seleccionada");
-
-        changeStatusButton.addActionListener(event -> changeSelectedTaskStatus());
         deleteButton.addActionListener(event -> deleteSelectedTask());
-        filterComboBox.addActionListener(event -> applyStatusFilter());
 
-        panel.add(new JLabel("Filtro:"));
-        panel.add(filterComboBox);
-        panel.add(changeStatusButton);
-        panel.add(deleteButton);
-
-        return panel;
+        buttonsPanel.add(completeButton);
+        buttonsPanel.add(deleteButton);
+        return buttonsPanel;
     }
 
     private void addTask() {
@@ -104,8 +119,8 @@ public class TodoAppFrame extends JFrame {
         if (title.isEmpty()) {
             JOptionPane.showMessageDialog(
                     this,
-                    "El titulo de la tarea es obligatorio.",
-                    "Error de validacion",
+                    "El titulo es obligatorio.",
+                    "Error",
                     JOptionPane.ERROR_MESSAGE
             );
             return;
@@ -115,75 +130,66 @@ public class TodoAppFrame extends JFrame {
         clearForm();
     }
 
-    private void deleteSelectedTask() {
-        int selectedViewRow = taskTable.getSelectedRow();
-
-        if (selectedViewRow == -1) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Debes seleccionar una tarea para eliminar.",
-                    "Advertencia",
-                    JOptionPane.WARNING_MESSAGE
-            );
+    private void markSelectedTaskAsCompleted() {
+        int modelRow = getSelectedModelRow();
+        if (modelRow == -1) {
+            showSelectionWarning();
             return;
         }
 
-        int confirmation = JOptionPane.showConfirmDialog(
+        tableModel.updateTaskStatus(modelRow, TaskStatus.COMPLETADA);
+    }
+
+    private void deleteSelectedTask() {
+        int modelRow = getSelectedModelRow();
+        if (modelRow == -1) {
+            showSelectionWarning();
+            return;
+        }
+
+        int answer = JOptionPane.showConfirmDialog(
                 this,
-                "Seguro que deseas eliminar la tarea seleccionada?",
+                "¿Seguro que deseas eliminar esta tarea?",
                 "Confirmar eliminacion",
                 JOptionPane.YES_NO_OPTION
         );
 
-        if (confirmation == JOptionPane.YES_OPTION) {
-            int selectedModelRow = taskTable.convertRowIndexToModel(selectedViewRow);
-            tableModel.removeTask(selectedModelRow);
+        if (answer == JOptionPane.YES_OPTION) {
+            tableModel.removeTask(modelRow);
         }
     }
 
-    private void changeSelectedTaskStatus() {
-        int selectedViewRow = taskTable.getSelectedRow();
-
-        if (selectedViewRow == -1) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Debes seleccionar una tarea para cambiar su estado.",
-                    "Advertencia",
-                    JOptionPane.WARNING_MESSAGE
-            );
-            return;
+    private int getSelectedModelRow() {
+        int selectedRow = taskTable.getSelectedRow();
+        if (selectedRow == -1) {
+            return -1;
         }
-
-        TaskStatus newStatus = (TaskStatus) JOptionPane.showInputDialog(
-                this,
-                "Selecciona el nuevo estado:",
-                "Cambiar estado",
-                JOptionPane.QUESTION_MESSAGE,
-                null,
-                TaskStatus.values(),
-                TaskStatus.COMPLETADA
-        );
-
-        if (newStatus != null) {
-            int selectedModelRow = taskTable.convertRowIndexToModel(selectedViewRow);
-            tableModel.updateTaskStatus(selectedModelRow, newStatus);
-        }
+        return taskTable.convertRowIndexToModel(selectedRow);
     }
 
-    private void applyStatusFilter() {
+    private void applyFilter() {
         String selectedFilter = (String) filterComboBox.getSelectedItem();
 
         if ("Todos".equals(selectedFilter)) {
             rowSorter.setRowFilter(null);
         } else {
-            rowSorter.setRowFilter(RowFilter.regexFilter("^" + selectedFilter + "$", 2));
+            rowSorter.setRowFilter(RowFilter.regexFilter(selectedFilter, 2));
         }
     }
 
     private void clearForm() {
         titleField.setText("");
         descriptionArea.setText("");
-        statusComboBox.setSelectedItem(TaskStatus.PENDIENTE);
+        statusComboBox.setSelectedIndex(0);
         titleField.requestFocus();
+    }
+
+    private void showSelectionWarning() {
+        JOptionPane.showMessageDialog(
+                this,
+                "Debes seleccionar una tarea primero.",
+                "Advertencia",
+                JOptionPane.WARNING_MESSAGE
+        );
     }
 }
